@@ -53,7 +53,7 @@ export default function NoteEditorPage() {
       Image,
     ],
     content: '',
-    editorProps: { attributes: { class: 'prose prose-lg max-w-none focus:outline-none min-h-[50vh]' } },
+    editorProps: { attributes: { class: 'prose prose-lg max-w-none focus:outline-none min-h-[50vh] dark:text-white' } },
     onUpdate: ({ editor }) => { autoSave(editor.getHTML()); },
   });
 
@@ -78,46 +78,46 @@ export default function NoteEditorPage() {
     await supabase.from('notes').update({ is_favorite: v }).eq('id', noteId);
   }
 
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex items-center justify-center h-full dark:bg-gray-950"><div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2">
-          <button onClick={() => router.push('/notes')} className="p-2 rounded-lg hover:bg-gray-100"><ArrowLeft className="w-4 h-4" /></button>
+          <button onClick={() => router.push('/notes')} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><ArrowLeft className="w-4 h-4 dark:text-gray-400" /></button>
           {saving && <span className="text-xs text-gray-400">Saving...</span>}
           {!saving && lastSaved && <span className="text-xs text-gray-400">Saved {lastSaved.toLocaleTimeString()}</span>}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={toggleFavorite} className="p-2 rounded-lg hover:bg-gray-100"><Star className={clsx('w-4 h-4', isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400')} /></button>
+          <button onClick={toggleFavorite} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><Star className={clsx('w-4 h-4', isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400')} /></button>
           <button onClick={saveNote} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700"><Save className="w-3.5 h-3.5" />Save</button>
         </div>
       </div>
       {editor && (
-        <div className="flex items-center gap-0.5 px-4 py-2 border-b border-gray-100 overflow-x-auto">
+        <div className="flex items-center gap-0.5 px-4 py-2 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
           <TB icon={<Bold className="w-4 h-4" />} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
           <TB icon={<Italic className="w-4 h-4" />} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} />
           <TB icon={<Code className="w-4 h-4" />} active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()} />
           <TB icon={<Highlighter className="w-4 h-4" />} active={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight().run()} />
-          <div className="w-px h-6 bg-gray-200 mx-1" />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
           <TB icon={<Heading1 className="w-4 h-4" />} active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} />
           <TB icon={<Heading2 className="w-4 h-4" />} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
-          <div className="w-px h-6 bg-gray-200 mx-1" />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
           <TB icon={<List className="w-4 h-4" />} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} />
           <TB icon={<ListOrdered className="w-4 h-4" />} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
           <TB icon={<ListChecks className="w-4 h-4" />} active={editor.isActive('taskList')} onClick={() => editor.chain().focus().toggleTaskList().run()} />
-          <div className="w-px h-6 bg-gray-200 mx-1" />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
           <TB icon={<Quote className="w-4 h-4" />} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
           <TB icon={<CodeSquare className="w-4 h-4" />} active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()} />
           <TB icon={<Minus className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().setHorizontalRule().run()} />
-          <div className="w-px h-6 bg-gray-200 mx-1" />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
           <TB icon={<Undo className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().undo().run()} />
           <TB icon={<Redo className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().redo().run()} />
         </div>
       )}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-8 py-8">
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 mb-6" />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600 mb-6 dark:text-white dark:bg-transparent" />
           {editor && <EditorContent editor={editor} />}
         </div>
       </div>
@@ -126,5 +126,5 @@ export default function NoteEditorPage() {
 }
 
 function TB({ icon, active, onClick }: { icon: React.ReactNode; active: boolean; onClick: () => void }) {
-  return <button onClick={onClick} className={clsx('p-1.5 rounded-md transition-colors', active ? 'bg-brand-100 text-brand-700' : 'text-gray-500 hover:bg-gray-100')}>{icon}</button>;
+  return <button onClick={onClick} className={clsx('p-1.5 rounded-md transition-colors', active ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800')}>{icon}</button>;
 }

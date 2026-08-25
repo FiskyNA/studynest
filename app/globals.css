@@ -15,6 +15,16 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
   }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
   * {
     @apply border-border;
   }
@@ -47,3 +57,9 @@
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 3px; }
+
+@layer utilities {
+  .dark .bg-brand-50 { background-color: rgba(76, 110, 245, 0.1); }
+  .dark .bg-brand-100 { background-color: rgba(76, 110, 245, 0.15); }
+  .dark .bg-brand-900\/30 { background-color: rgba(76, 110, 245, 0.3); }
+}
