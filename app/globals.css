@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; --foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%; --primary-foreground: 210 40% 98%;
+    --muted: 210 40% 96%; --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%; --ring: 221.2 83.2% 53.3%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+
+.tiptap { outline: none; }
+.tiptap > * + * { margin-top: 0.75em; }
+.tiptap p.is-editor-empty:first-child::before { color: hsl(var(--muted-foreground)); content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
+.tiptap h1 { font-size: 2em; font-weight: 700; }
+.tiptap h2 { font-size: 1.5em; font-weight: 600; }
+.tiptap h3 { font-size: 1.25em; font-weight: 600; }
+.tiptap ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.tiptap ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tiptap ul[data-type="taskList"] li input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: hsl(var(--primary)); }
+.tiptap pre { background: hsl(var(--muted)); border-radius: 0.5rem; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; overflow-x: auto; }
+.tiptap code { background: hsl(var(--muted)); border-radius: 0.25rem; padding: 0.15rem 0.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.875em; }
+.tiptap pre code { background: none; padding: 0; }
+.tiptap blockquote { border-left: 3px solid hsl(var(--border)); padding-left: 1rem; font-style: italic; color: hsl(var(--muted-foreground)); }
+.tiptap mark { background-color: #fef08a; border-radius: 0.25rem; padding: 0.1rem 0.2rem; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 3px; }
