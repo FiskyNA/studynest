@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
+export const dynamic = 'force-dynamic';
+
 const RATE_LIMIT_WINDOW = 60000;
 const MAX_ATTEMPTS = 5;
 
