@@ -5,6 +5,44 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
+const RATE_LIMIT_WINDOW = 60000;
+const MAX_ATTEMPTS = 5;
+
+function getRateLimitKey() {
+  return `auth_attempts_${Date.now()}`;
+}
+
+function canAttempt(): boolean {
+  try {
+    const stored = localStorage.getItem('auth_rate_limit');
+    if (!stored) return true;
+    const { timestamp, count } = JSON.parse(stored);
+    if (Date.now() - timestamp > RATE_LIMIT_WINDOW) {
+      localStorage.removeItem('auth_rate_limit');
+      return true;
+    }
+    return count < MAX_ATTEMPTS;
+  } catch {
+    return true;
+  }
+}
+
+function recordAttempt() {
+  try {
+    const stored = localStorage.getItem('auth_rate_limit');
+    if (!stored) {
+      localStorage.setItem('auth_rate_limit', JSON.stringify({ timestamp: Date.now(), count: 1 }));
+      return;
+    }
+    const { timestamp, count } = JSON.parse(stored);
+    if (Date.now() - timestamp > RATE_LIMIT_WINDOW) {
+      localStorage.setItem('auth_rate_limit', JSON.stringify({ timestamp: Date.now(), count: 1 }));
+    } else {
+      localStorage.setItem('auth_rate_limit', JSON.stringify({ timestamp, count: count + 1 }));
+    }
+  } catch {}
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +52,12 @@ export default function LoginPage() {
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!canAttempt()) {
+      toast.error('Too many attempts. Please wait a minute.');
+      return;
+    }
+
     setLoading(true);
     try {
       if (isSignUp) {
@@ -29,7 +73,9 @@ export default function LoginPage() {
         if (error) throw error;
         window.location.href = '/notes';
       }
+      recordAttempt();
     } catch (error: any) {
+      recordAttempt();
       toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);

@@ -55,7 +55,10 @@ export default function LandingPage() {
         </div>
       </main>
       <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-500">
-        StudyNest &copy; 2026
+        <div className="flex items-center justify-center gap-6">
+          <span>StudyNest &copy; 2026</span>
+          <Link href="/privacy" className="hover:text-gray-700 transition-colors">Privacy Policy</Link>
+        </div>
       </footer>
     </div>
   );
