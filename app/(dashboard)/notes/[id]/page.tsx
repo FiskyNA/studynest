@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -12,8 +12,12 @@ import TaskItem from '@tiptap/extension-task-item';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import LinkExtension from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 import { common, createLowlight } from 'lowlight';
-import { ArrowLeft, Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, ListChecks, Quote, Minus, CodeSquare, Highlighter, Undo, Redo, Save, Star } from 'lucide-react';
+import { ArrowLeft, Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, ListChecks, Quote, Minus, CodeSquare, Highlighter, Undo, Redo, Save, Star, Upload, X, TableIcon, Tag, ImagePlus } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -33,14 +37,20 @@ export default function NoteEditorPage() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [showTagInput, setShowTagInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   const autoSave = useCallback(
     debounce(async (content: string) => {
       setSaving(true);
-      await supabase.from('notes').update({ title, content, updated_at: new Date().toISOString() }).eq('id', noteId);
+      await supabase.from('notes').update({ title, content, tags, updated_at: new Date().toISOString() }).eq('id', noteId);
       setLastSaved(new Date()); setSaving(false);
-    }, 1000), [title, noteId]
+    }, 1000), [title, noteId, tags]
   );
 
   const editor = useEditor({
@@ -51,6 +61,8 @@ export default function NoteEditorPage() {
       CodeBlockLowlight.configure({ lowlight }),
       LinkExtension.configure({ openOnClick: false }),
       Image,
+      Table.configure({ resizable: true }),
+      TableRow, TableCell, TableHeader,
     ],
     content: '',
     editorProps: { attributes: { class: 'prose prose-lg max-w-none focus:outline-none min-h-[50vh] dark:text-white' } },
@@ -61,14 +73,19 @@ export default function NoteEditorPage() {
 
   async function loadNote() {
     const { data } = await supabase.from('notes').select('*').eq('id', noteId).single();
-    if (data) { setTitle(data.title); setIsFavorite(data.is_favorite); if (editor && data.content) editor.commands.setContent(data.content); }
+    if (data) {
+      setTitle(data.title);
+      setIsFavorite(data.is_favorite);
+      setTags(data.tags || []);
+      if (editor && data.content) editor.commands.setContent(data.content);
+    }
     setLoading(false);
   }
 
   async function saveNote() {
     if (!editor) return;
     setSaving(true);
-    const { error } = await supabase.from('notes').update({ title, content: editor.getHTML(), updated_at: new Date().toISOString() }).eq('id', noteId);
+    const { error } = await supabase.from('notes').update({ title, content: editor.getHTML(), tags, updated_at: new Date().toISOString() }).eq('id', noteId);
     if (error) toast.error('Failed to save'); else { setLastSaved(new Date()); toast.success('Saved!'); }
     setSaving(false);
   }
@@ -76,6 +93,61 @@ export default function NoteEditorPage() {
   async function toggleFavorite() {
     const v = !isFavorite; setIsFavorite(v);
     await supabase.from('notes').update({ is_favorite: v }).eq('id', noteId);
+  }
+
+  function addTag() {
+    if (!newTag.trim() || tags.includes(newTag.trim())) return;
+    const updated = [...tags, newTag.trim().toLowerCase()];
+    setTags(updated);
+    setNewTag('');
+    setShowTagInput(false);
+    supabase.from('notes').update({ tags: updated }).eq('id', noteId);
+  }
+
+  function removeTag(tag: string) {
+    const updated = tags.filter((t) => t !== tag);
+    setTags(updated);
+    supabase.from('notes').update({ tags: updated }).eq('id', noteId);
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setUploading(false); return; }
+
+    const path = `${user.id}/${noteId}/${file.name}`;
+    const { error } = await supabase.storage.from('resources').upload(path, file, { upsert: true });
+    if (error) { toast.error('Upload failed'); setUploading(false); return; }
+
+    const { data: urlData } = supabase.storage.from('resources').getPublicUrl(path);
+    if (urlData.publicUrl) {
+      await supabase.from('resources').insert({ user_id: user.id, note_id: noteId, name: file.name, url: urlData.publicUrl, type: file.type, size: file.size });
+      toast.success('File uploaded!');
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+    setUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setUploading(false); return; }
+
+    const path = `${user.id}/${noteId}/images/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('resources').upload(path, file, { upsert: true });
+    if (error) { toast.error('Upload failed'); setUploading(false); return; }
+
+    const { data: urlData } = supabase.storage.from('resources').getPublicUrl(path);
+    if (urlData.publicUrl) {
+      editor.chain().focus().setImage({ src: urlData.publicUrl }).run();
+      toast.success('Image inserted!');
+    }
+    setUploading(false);
+    if (imageInputRef.current) imageInputRef.current.value = '';
   }
 
   if (loading) return <div className="flex items-center justify-center h-full dark:bg-gray-950"><div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>;
@@ -89,10 +161,32 @@ export default function NoteEditorPage() {
           {!saving && lastSaved && <span className="text-xs text-gray-400">Saved {lastSaved.toLocaleTimeString()}</span>}
         </div>
         <div className="flex items-center gap-1">
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" title="Upload file">
+            <Upload className={clsx('w-4 h-4', uploading ? 'animate-spin text-brand-500' : 'text-gray-400')} />
+          </button>
+          <button onClick={() => setShowTagInput(!showTagInput)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" title="Add tag">
+            <Tag className={clsx('w-4 h-4', showTagInput ? 'text-brand-500' : 'text-gray-400')} />
+          </button>
           <button onClick={toggleFavorite} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><Star className={clsx('w-4 h-4', isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400')} /></button>
           <button onClick={saveNote} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700"><Save className="w-3.5 h-3.5" />Save</button>
         </div>
       </div>
+
+      {showTagInput && (
+        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+          <div className="flex items-center gap-2 flex-wrap">
+            {tags.map((tag) => (
+              <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded-full text-xs font-medium">
+                #{tag}
+                <button onClick={() => removeTag(tag)} className="hover:text-brand-900"><X className="w-3 h-3" /></button>
+              </span>
+            ))}
+            <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTag()} placeholder="Add tag..." className="bg-transparent outline-none text-sm w-24 dark:text-white" autoFocus />
+          </div>
+        </div>
+      )}
+
       {editor && (
         <div className="flex items-center gap-0.5 px-4 py-2 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
           <TB icon={<Bold className="w-4 h-4" />} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
@@ -111,13 +205,25 @@ export default function NoteEditorPage() {
           <TB icon={<CodeSquare className="w-4 h-4" />} active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()} />
           <TB icon={<Minus className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().setHorizontalRule().run()} />
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+          <TB icon={<TableIcon className="w-4 h-4" />} active={editor.isActive('table')} onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
+          <TB icon={<ImagePlus className="w-4 h-4" />} active={false} onClick={() => imageInputRef.current?.click()} />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
           <TB icon={<Undo className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().undo().run()} />
           <TB icon={<Redo className="w-4 h-4" />} active={false} onClick={() => editor.chain().focus().redo().run()} />
         </div>
       )}
+
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-8 py-8">
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600 mb-6 dark:text-white dark:bg-transparent" />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600 mb-4 dark:text-white dark:bg-transparent" />
+          {tags.length > 0 && !showTagInput && (
+            <div className="flex flex-wrap gap-1.5 mb-6">
+              {tags.map((tag) => (
+                <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">#{tag}</span>
+              ))}
+            </div>
+          )}
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           {editor && <EditorContent editor={editor} />}
         </div>
       </div>
