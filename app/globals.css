@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,4 +62,44 @@
   .dark .bg-brand-50 { background-color: rgba(76, 110, 245, 0.1); }
   .dark .bg-brand-100 { background-color: rgba(76, 110, 245, 0.15); }
   .dark .bg-brand-900\/30 { background-color: rgba(76, 110, 245, 0.3); }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400;
+  }
+
+  .glass {
+    @apply bg-white/5 dark:bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-card {
+    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] rounded-2xl;
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 60px -12px rgba(99, 102, 241, 0.4);
+  }
+
+  .dotted-border {
+    position: relative;
+  }
+  .dotted-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px dotted transparent;
+    border-radius: inherit;
+    pointer-events: none;
+    transition: border-color 0.3s ease;
+  }
+  .dotted-border:hover::before {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-float-slower {
+    animation: none;
+  }
 }
