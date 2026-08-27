@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useSpring, useInView, useMotionValue, animate } from 'framer-motion';
 import Link from 'next/link';
 import {
   BookOpen, CheckSquare, Calendar, Brain, BarChart3, Sparkles,
-  ArrowRight, Zap, ChevronRight, Star, Users, Clock, Trophy,
-  Menu, X, GraduationCap, Target, TrendingUp, Lightbulb
+  ArrowRight, Zap, Star, Users, Clock,
+  Menu, X, GraduationCap, Target, TrendingUp
 } from 'lucide-react';
 
 function CursorDot() {
@@ -106,24 +106,46 @@ function TextReveal({ children, className = '', delay = 0 }: { children: React.R
   );
 }
 
-function WordReveal({ text, className = '' }: { text: string; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
-  const words = text.split(' ');
+function FeatureCard({ f, index }: { f: typeof features[0]; index: number }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
   return (
-    <div ref={ref} className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 15 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          transition={{ duration: 0.5, delay: i * 0.06, ease: [0.25, 1, 0.5, 1] }}
-          className="inline-block mr-[0.3em]"
-        >
-          {word}
-        </motion.span>
-      ))}
-    </div>
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 1, 0.5, 1] }}
+      className="group relative glass-card p-8 md:p-12 overflow-hidden hover:bg-white/[0.05] transition-all duration-500"
+    >
+      {/* Mouse-tracking gradient spotlight */}
+      <div
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{
+          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(99,102,241,0.08), transparent 60%)`,
+        }}
+      />
+      <div className="relative flex flex-col md:flex-row items-start gap-8">
+        <div className="flex items-center gap-6 shrink-0">
+          <span className="text-6xl md:text-8xl font-display font-bold text-white/[0.04] group-hover:text-white/[0.08] transition-colors">{f.num}</span>
+          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+            <f.icon className="w-7 h-7 text-white" />
+          </div>
+        </div>
+        <div>
+          <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">{f.title}</h3>
+          <p className="text-white/40 text-lg leading-relaxed max-w-2xl">{f.desc}</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -144,7 +166,7 @@ const steps = [
 
 const testimonials = [
   { quote: 'StudyNest replaced 5 different apps I was using. Notes, tasks, schedule — everything in one beautiful place.', name: 'Sarah Chen', uni: 'Stanford University', year: 'Junior' },
-  { quote: 'The AI flashcards are a game changer. I retention went up 40% after just two weeks of using the spaced repetition system.', name: 'Marcus Johnson', uni: 'MIT', year: 'Senior' },
+  { quote: 'The AI flashcards are a game changer. My retention went up 40% after just two weeks of using the spaced repetition system.', name: 'Marcus Johnson', uni: 'MIT', year: 'Senior' },
   { quote: 'Finally a student app that looks good AND works well. The kanban board for tasks keeps me organized all semester.', name: 'Priya Patel', uni: 'UC Berkeley', year: 'Sophomore' },
 ];
 
@@ -158,7 +180,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleScroll = () => setNavBlur(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -169,7 +191,7 @@ export default function LandingPage() {
       <CursorTracker />
 
       {/* ─── NAV ─── */}
-      <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${navBlur ? 'bg-[#050510]/80 backdrop-blur-xl border-b border-white/[0.06]' : ''}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${navBlur ? 'bg-[#050510]/90 backdrop-blur-xl border-b border-white/[0.06]' : ''}`}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:shadow-brand-500/40 transition-shadow">
@@ -196,7 +218,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden bg-[#0a0a1a]/95 backdrop-blur-xl border-t border-white/[0.06 px-6 py-6 space-y-4"
+            className="md:hidden bg-[#0a0a1a]/95 backdrop-blur-xl border-t border-white/[0.06] px-6 py-6 space-y-4"
           >
             <a href="#features" onClick={() => setMobileMenu(false)} className="block text-white/60 hover:text-white py-2">Features</a>
             <a href="#how-it-works" onClick={() => setMobileMenu(false)} className="block text-white/60 hover:text-white py-2">How It Works</a>
@@ -218,6 +240,9 @@ export default function LandingPage() {
 
         {/* Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+
+        {/* Noise texture overlay */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==')]" />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <motion.div
@@ -257,17 +282,34 @@ export default function LandingPage() {
           >
             <Link
               href="/signup"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-brand-500 to-purple-600 text-white rounded-2xl font-semibold text-lg hover:shadow-xl hover:shadow-brand-500/25 transition-all duration-300"
+              className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-brand-500 to-purple-600 text-white rounded-2xl font-semibold text-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-brand-500/25"
             >
-              Start for Free
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10">Start for Free</span>
+              <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/10 text-white/70 rounded-2xl font-semibold text-lg hover:bg-white/5 hover:border-white/20 transition-all duration-300"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/10 text-white/70 rounded-2xl font-semibold text-lg hover:bg-white/5 hover:border-white/20 hover:text-white transition-all duration-300"
             >
               Log In
             </Link>
+          </motion.div>
+
+          {/* Scroll indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
+            className="absolute bottom-12 left-1/2 -translate-x-1/2"
+          >
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2"
+            >
+              <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} className="w-1 h-2.5 bg-white/50 rounded-full" />
+            </motion.div>
           </motion.div>
         </div>
       </motion.section>
@@ -307,29 +349,9 @@ export default function LandingPage() {
             </h2>
           </TextReveal>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             {features.map((f, i) => (
-              <motion.div
-                key={f.num}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.6, delay: i * 0.1, ease: [0.25, 1, 0.5, 1] }}
-                className="group glass-card p-8 md:p-12 hover:bg-white/[0.05] transition-all duration-500"
-              >
-                <div className="flex flex-col md:flex-row items-start gap-8">
-                  <div className="flex items-center gap-6 shrink-0">
-                    <span className="text-6xl md:text-8xl font-display font-bold text-white/[0.04] group-hover:text-white/[0.08] transition-colors">{f.num}</span>
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      <f.icon className="w-7 h-7 text-white" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-display text-2xl md:text-3xl font-bold mb-3 group-hover:text-gradient transition-all">{f.title}</h3>
-                    <p className="text-white/40 text-lg leading-relaxed max-w-2xl">{f.desc}</p>
-                  </div>
-                </div>
-              </motion.div>
+              <FeatureCard key={f.num} f={f} index={i} />
             ))}
           </div>
         </div>
@@ -346,19 +368,33 @@ export default function LandingPage() {
           </TextReveal>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent" />
+            {/* Animated connecting line */}
+            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px">
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-transparent via-brand-500/40 to-transparent origin-left"
+              />
+            </div>
 
             {steps.map((step, i) => (
               <TextReveal key={i} delay={i * 0.15} className="relative">
                 <div className="flex flex-col items-center text-center">
                   <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-2xl glass-card flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 rounded-2xl glass-card flex items-center justify-center">
                       <step.icon className="w-8 h-8 text-brand-400" />
                     </div>
-                    <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.15, type: 'spring', stiffness: 300, damping: 15 }}
+                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center shadow-lg shadow-brand-500/30"
+                    >
                       {i + 1}
-                    </span>
+                    </motion.span>
                   </div>
                   <h3 className="font-display text-xl font-bold mb-2">{step.title}</h3>
                   <p className="text-white/40 leading-relaxed">{step.desc}</p>
@@ -382,7 +418,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t, i) => (
               <TextReveal key={i} delay={i * 0.1}>
-                <div className="glass-card p-8 h-full hover:bg-white/[0.05] transition-all duration-500 group">
+                <div className="glass-card p-8 h-full hover:bg-white/[0.05] transition-all duration-500 group relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="flex gap-1 mb-6">
                     {[...Array(5)].map((_, j) => (
                       <Star key={j} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -409,6 +446,7 @@ export default function LandingPage() {
       <section className="relative py-32 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-brand-500/10 via-purple-500/5 to-transparent" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-500/15 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[120px] animate-float-slow" />
 
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <TextReveal>

@@ -28,8 +28,19 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+  @media (min-width: 1024px) {
+    body {
+      cursor: none;
+    }
+    a, button, [role="button"] {
+      cursor: none;
+    }
   }
 }
 
