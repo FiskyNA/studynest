@@ -71,7 +71,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        window.location.href = '/notes';
+        window.location.href = '/dashboard';
       }
       recordAttempt();
     } catch (error: any) {
