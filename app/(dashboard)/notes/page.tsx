@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Search, FileText, Star, Trash2, Folder, FolderPlus, ChevronRight, X, Tag, Hash } from 'lucide-react';
+import { Plus, Search, FileText, Star, Trash2, Folder, FolderPlus, ChevronRight, X, Tag, Hash, FileUp } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
-interface Note { id: string; title: string; content: string; is_pinned: boolean; is_favorite: boolean; folder_id: string | null; tags: string[]; updated_at: string; }
+interface Note { id: string; title: string; content: string; is_pinned: boolean; is_favorite: boolean; folder_id: string | null; tags: string[]; updated_at: string; pdf_url: string | null; }
 interface FolderType { id: string; name: string; color: string; }
 
 const folderColors = ['#4c6ef5', '#7950f2', '#e64980', '#f76707', '#12b886', '#15aabf', '#fab005', '#82c91e'];
@@ -155,9 +155,16 @@ export default function NotesPage() {
                 <Link key={note.id} href={`/notes/${note.id}`} className={clsx('group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-600 transition-all', note.is_pinned && 'ring-2 ring-brand-100 dark:ring-brand-800 border-brand-200')}>
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold line-clamp-1 flex-1 dark:text-white">{note.title}</h3>
-                    <button onClick={(e) => { e.preventDefault(); deleteNote(note.id); }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                    <div className="flex items-center gap-1">
+                      {note.pdf_url && (
+                        <span className="flex items-center gap-1 text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">
+                          <FileUp className="w-3 h-3" />PDF
+                        </span>
+                      )}
+                      <button onClick={(e) => { e.preventDefault(); deleteNote(note.id); }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{note.content?.replace(/<[^>]*>/g, '') || 'Empty note...'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{note.pdf_url ? 'PDF document — click to view' : (note.content?.replace(/<[^>]*>/g, '') || 'Empty note...')}</p>
                   {(note.tags && note.tags.length > 0) && (
                     <div className="flex flex-wrap gap-1 mb-2">
                       {note.tags.slice(0, 3).map((tag) => (

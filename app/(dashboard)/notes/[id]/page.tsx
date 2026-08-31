@@ -17,7 +17,7 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { common, createLowlight } from 'lowlight';
-import { ArrowLeft, Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, ListChecks, Quote, Minus, CodeSquare, Highlighter, Undo, Redo, Save, Star, Upload, X, TableIcon, Tag, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, ListChecks, Quote, Minus, CodeSquare, Highlighter, Undo, Redo, Save, Star, Upload, X, TableIcon, Tag, ImagePlus, FileText, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -41,6 +41,7 @@ export default function NoteEditorPage() {
   const [newTag, setNewTag] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showTagInput, setShowTagInput] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
@@ -77,6 +78,7 @@ export default function NoteEditorPage() {
       setTitle(data.title);
       setIsFavorite(data.is_favorite);
       setTags(data.tags || []);
+      setPdfUrl(data.pdf_url || null);
       if (editor && data.content) editor.commands.setContent(data.content);
     }
     setLoading(false);
@@ -214,18 +216,38 @@ export default function NoteEditorPage() {
       )}
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-8">
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600 mb-4 dark:text-white dark:bg-transparent" />
-          {tags.length > 0 && !showTagInput && (
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {tags.map((tag) => (
-                <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">#{tag}</span>
-              ))}
+        {pdfUrl ? (
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <FileText className="w-4 h-4" />
+                <span>PDF Document</span>
+              </div>
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-brand-600 dark:text-brand-400 hover:underline">
+                <ExternalLink className="w-3.5 h-3.5" />
+                Open in new tab
+              </a>
             </div>
-          )}
-          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-          {editor && <EditorContent editor={editor} />}
-        </div>
+            <iframe
+              src={pdfUrl}
+              className="flex-1 w-full border-0"
+              title={title || 'PDF Viewer'}
+            />
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto px-8 py-8">
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-4xl font-bold outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600 mb-4 dark:text-white dark:bg-transparent" />
+            {tags.length > 0 && !showTagInput && (
+              <div className="flex flex-wrap gap-1.5 mb-6">
+                {tags.map((tag) => (
+                  <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">#{tag}</span>
+                ))}
+              </div>
+            )}
+            <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            {editor && <EditorContent editor={editor} />}
+          </div>
+        )}
       </div>
     </div>
   );
